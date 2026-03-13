@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JARVIS AI Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+
+
+:root {
+  --jarvis-blue: #00eaff;
+  --jarvis-dark: #020617;
+  --jarvis-panel: #061426;
+  --jarvis-glow: 0 0 10px rgba(0,234,255,0.6);
+  --jarvis-border: 1px solid rgba(0,234,255,0.35);
+  --text-main: #c9f9ff;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  background: radial-gradient(circle at center, #031225, #010409);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  color: var(--text-main);
+}
+
+/* HUD grid background */
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:
+    linear-gradient(rgba(0,234,255,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,234,255,.06) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* Main panel */
+
+.chat-wrapper {
+  width: 100%;
+  max-width: 460px;
+  height: 95vh;
+  background: var(--jarvis-panel);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: var(--jarvis-border);
+  box-shadow: 0 0 25px rgba(0,234,255,0.25);
+  position: relative;
+}
+
+/* Expanded mode */
+
+.chat-wrapper.expanded {
+  max-width: 100%;
+  height: 100vh;
+  border-radius: 0;
+}
+
+/* Header */
+
+.chat-header {
+  background: linear-gradient(90deg, #00eaff, #007bff);
+  padding: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: white;
+  box-shadow: 0 0 15px rgba(0,234,255,0.6);
+}
+
+/* Robot icon */
+
+.robot-icon {
+  font-size: 26px;
+  color: white;
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Floating animation */
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* Header text */
+
+.header-title-text {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 1px;
+}
+
+/* Status */
+
+.status {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.status-pulse {
+  width: 8px;
+  height: 8px;
+  background: #00ffae;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #00ffae;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0,255,174,.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0,255,174,0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0,255,174,0);
+  }
+}
+
+/* Header controls */
+
+.header-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mode-icon {
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* History panel */
+
+.history-panel {
+  position: absolute;
+  top: 0;
+  right: -100%;
+  width: 75%;
+  height: 100%;
+  background: #02101e;
+  border-left: var(--jarvis-border);
+  transition: right .3s;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-panel.open {
+  right: 0;
+}
+
+/* History header */
+
+.history-header {
+  padding: 18px;
+  background: linear-gradient(90deg, #00eaff, #008cff);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+/* History items */
+
+.history-item {
+  padding: 10px 14px;
+  background: #061426;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  border: 1px solid rgba(0,234,255,.25);
+  transition: .3s;
+}
+
+.history-item:hover {
+  border-color: #00eaff;
+  box-shadow: 0 0 8px rgba(0,234,255,.5);
+}
+
+/* Chat container */
+
+#chat-container {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Scrollbar */
+
+#chat-container::-webkit-scrollbar {
+  width: 5px;
+}
+
+#chat-container::-webkit-scrollbar-thumb {
+  background: #00eaff;
+  border-radius: 10px;
+}
+
+/* Message bubbles */
+
+.message {
+  max-width: 85%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* AI bubble */
+
+.ai-message {
+  background: #061426;
+  border: 1px solid rgba(0,234,255,.35);
+  color: #bffaff;
+}
+
+/* User bubble */
+
+.user-message {
+  background: linear-gradient(90deg, #00eaff, #007bff);
+  color: white;
+  align-self: flex-end;
+}
+
+/* Animation */
+
+.message-wrapper {
+  display: flex;
+  animation: msgPop .35s ease;
+}
+
+@keyframes msgPop {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+    </style>
+</head>
+
+<body>
+
+    <div class="chat-wrapper" id="main-chat-wrapper">
+        <div id="history-panel" class="history-panel">
+            <div class="history-header">
+                <div><i class="fas fa-history"></i> History</div>
+                <div style="display:flex; gap:15px;">
+                    <i class="fas fa-plus" onclick="startNewChat()" title="New Chat"></i>
+                    <i class="fas fa-times" onclick="toggleHistory()" title="Close"></i>
+                </div>
+            </div>
+            <div id="history-list"></div>
+        </div>
+
+        <div class="chat-header">
+            <div class="mode-icon expanded-menu-icon" onclick="toggleHistory()" title="Menu">
+                <i class="fas fa-bars"></i>
+            </div>
+
+            <i class="fas fa-robot robot-icon"></i>
+            <div>
+                <div class="header-title-text" style="font-weight: 700; font-size: 19px; letter-spacing: 0.5px;">JARVIS AI</div>
+                <div class="status">
+                    <div class="status-pulse"></div>
+                    AI Expert Online
+                </div>
+            </div>
+
+            <div class="header-controls">
+                <div class="mode-icon original-menu-icon" onclick="toggleHistory()" title="Chat History">
+                    <i class="fas fa-bars"></i>
+                </div>
+                <div class="mode-icon" onclick="toggleDarkMode()">
+                    <i id="dark-mode-icon" class="fas fa-moon"></i>
+                </div>
+                <div id="pink-theme-dot" class="theme-dot pink-dot" onclick="setColorTheme('pink')"></div>
+                <div id="blue-theme-dot" class="theme-dot blue-dot" onclick="setColorTheme('blue')" style="display:none;"></div>
+            </div>
+        </div>
+
+        <div id="chat-container">
+            <div id="welcome-msg" class="message-wrapper ai" style="flex-direction: column;">
+                <div class="capabilities-container" id="cap-container">
+                    <div class="capability-card" onclick="setMode('chat')">
+                        <div class="cap-icon"><i class="fas fa-comment"></i></div>
+                        <div class="cap-text">
+                            <h3>Chat</h3>
+                            <select class="cap-dropdown" onclick="event.stopPropagation();" onchange="setMode('chat', this.value)">
+                                <option>General chat</option>
+                                <option>study chat</option>
+                                <option>deep research</option>
+                                <option>analyze website</option>
+                                <option>ai gf/bf</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="capability-card" onclick="setMode('code')">
+                        <div class="cap-icon"><i class="fas fa-code"></i></div>
+                        <div class="cap-text">
+                            <h3>Code</h3>
+                            <select class="cap-dropdown" onclick="event.stopPropagation();" onchange="setMode('code', this.value)">
+                                <option>Prompt to Code</option>
+                                <option>Update Existing Code</option>
+                                <option>Image to Code</option>
+                                <option>Video to Code</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="capability-card" onclick="setMode('image')">
+                        <div class="cap-icon"><i class="far fa-image"></i></div>
+                        <div class="cap-text">
+                            <h3>Image</h3>
+                            <select class="cap-dropdown" onclick="event.stopPropagation();" onchange="setMode('image', this.value)">
+                                <option>Prompt to image</option>
+                                <option>Update Existing Image</option>
+                                <option>Video to image</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="capability-card" onclick="setMode('video')">
+                        <div class="cap-icon"><i class="fas fa-video"></i></div>
+                        <div class="cap-text">
+                            <h3>Video</h3>
+                            <select class="cap-dropdown" onclick="event.stopPropagation();" onchange="setMode('video', this.value)">
+                                <option>Prompt to video</option>
+                                <option>Image to video</option>
+                                <option>Update Existing Video</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="active-mode-container" id="active-mode-container" style="display:none; width:100%; background:var(--white); padding:20px; border-radius:16px; border:1px solid rgba(0,0,0,0.05); text-align:center; box-shadow: 0 4px 15px rgba(0,0,0,0.02); position: relative;">
+                    <button onclick="showAllModes()" style="position: absolute; top: 15px; left: 15px; background: transparent; border: none; font-size: 18px; color: var(--primary-blue); cursor: pointer; transition: 0.2s;" title="Back"><i class="fas fa-arrow-left"></i></button>
+
+                    <div style="font-size: 24px; color: var(--primary-blue); margin-bottom: 10px;" id="active-mode-icon"><i class="fas fa-cog"></i></div>
+                    <h3 id="active-mode-title" style="margin-bottom:8px; font-size: 16px; color:var(--text-main); font-weight: 600;">Mode</h3>
+                    <p id="active-mode-instruction" style="font-size:13.5px; color:var(--text-main); opacity: 0.7; margin-bottom:10px; line-height: 1.5;"></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="file-preview"></div>
+
+        <div class="loader" id="loader">
+            <div class="thought-box" style="margin-bottom: 0; width: 100%;">
+                <div class="thought-header">
+                    <div class="thought-title">
+                        <i class="fas fa-sparkles sparkle-icon"></i>
+                        <span>Thinking <span class="typing-dots"><span></span><span></span><span></span></span></span>
+                    </div>
+                </div>
+                <div class="thought-content" id="loader-content-text" style="display:block;">
+                    <div><i class="fas fa-circle-notch fa-spin" style="color:var(--primary-blue); margin-right:5px;"></i> Analyzing prompt...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <div class="prompt-box">
+                <input type="text" id="user-input" placeholder="Start typing a prompt for chat..." autocomplete="off">
+                <div class="prompt-actions">
+                    <div class="action-group">
+                        <label for="file-input" class="icon-btn" title="Add Images/Files">
+                            <i class="fas fa-plus"></i>
+                        </label>
+                        <input type="file" id="file-input" style="display: none;" multiple accept="image/*,.html,.htm,.css,.js,.py,.php,.json,.xml,.txt">
+                    </div>
+                    <div class="action-group">
+                        <button id="send-btn">Run</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="code-popup-backdrop" id="code-popup-backdrop">
+        <div class="code-popup">
+            <div class="code-popup-header">
+                <!--<div>Code Output Viewer</div>-->
+                <i class="fas fa-times close-popup" id="close-popup"></i>
+            <!--</div>
+            <iframe id="code-output-frame"></iframe>-->
+        </div>-->
+    </div>
+
+    <script>
+        // --- API Configuration ---
+        const NEW_API_KEY = "devx-bbegtmum4l67wo5u98t2be9iqdxu7ya0";
+        const NEW_BASE_URL = "https://aimodelapi.onrender.com/v1";
+
+        // --- Core Variables ---
+        const mainWrapper = document.getElementById("main-chat-wrapper");
+        const chatContainer = document.getElementById("chat-container");
+        const userInput = document.getElementById("user-input");
+        const sendBtn = document.getElementById("send-btn");
+        const loader = document.getElementById("loader");
+        const fileInput = document.getElementById("file-input");
+        const filePreview = document.getElementById("file-preview");
+        const popupBackdrop = document.getElementById("code-popup-backdrop");
+        const popupClose = document.getElementById("close-popup");
+        const outputFrame = document.getElementById("code-output-frame");
+
+        let selectedFileContent = "";
+        let selectedFileName = "";
+        let selectedImageFiles = [];
+
+        // --- User Scroll State Tracking ---
+        let isUserScrolling = false;
+        chatContainer.addEventListener('scroll', () => {
+            const distFromBottom = chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight;
+            isUserScrolling = distFromBottom > 50;
+        });
+
+        // --- Custom Marked Renderer for Rich Code Blocks ---
+        let codeBlockIdCounter = 0;
+        const renderer = new marked.Renderer();
+
+        renderer.code = function(tokenOrCode, lang, escaped) {
+            let codeText = typeof tokenOrCode === 'object' ? tokenOrCode.text : tokenOrCode;
+            let codeLang = typeof tokenOrCode === 'object' ? tokenOrCode.lang : lang;
+            let isEscaped = typeof tokenOrCode === 'object' ? tokenOrCode.escaped : escaped;
+
+            codeText = String(codeText || '');
+
+            codeBlockIdCounter++;
+            const codeId = `code-content-${codeBlockIdCounter}`;
+            const cleanLang = (codeLang || 'code').toLowerCase();
+
+            const safeCode = isEscaped ? codeText : codeText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+            return `
+                <div class="code-block-container">
+                    <div class="code-block-header">
+                        <div class="code-lang"><i class="fas fa-code" style="color: #00c6ff;"></i> ${cleanLang}</div>
+                        <div class="code-actions">
+                            <button class="action-btn" onclick="runCode('${codeId}')" title="Run Code">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="action-btn" onclick="copyCode('${codeId}')" title="Copy">
+                                <i class="far fa-copy"></i>
+                            </button>
+                            <button class="action-btn" onclick="downloadCode('${codeId}', '${cleanLang}')" title="Download">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <pre><code class="hljs language-${cleanLang}" id="${codeId}">${safeCode}</code></pre>
+                </div>
+            `;
+        };
+        marked.setOptions({ renderer: renderer });
+
+        // --- Code Action Functions ---
+
+        popupClose.onclick = () => {
+            popupBackdrop.classList.remove("open");
+            outputFrame.srcdoc = "";
+        };
+        popupBackdrop.onclick = (e) => {
+            if (e.target === popupBackdrop) {
+                popupBackdrop.classList.remove("open");
+                outputFrame.srcdoc = "";
+            }
+        };
+
+        function runCode(id) {
+            const codeEl = document.getElementById(id);
+            if (!codeEl) return;
+            const code = codeEl.innerText;
+
+            popupBackdrop.classList.add("open");
+            outputFrame.srcdoc = code;
+        }
+
+        function copyCode(id) {
+            const codeEl = document.getElementById(id);
+            if (!codeEl) return;
+            const text = codeEl.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.currentTarget;
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-check"></i>';
+                btn.style.color = '#00ff88';
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.style.color = '';
+                }, 2000);
+            });
+        }
+
+        function downloadCode(id, lang) {
+            const codeEl = document.getElementById(id);
+            if (!codeEl) return;
+            const text = codeEl.innerText;
+            const blob = new Blob([text], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+
+            const extMap = { 'html': 'html', 'javascript': 'js', 'js': 'js', 'css': 'css', 'python': 'py', 'py': 'py', 'sql': 'sql', 'bash': 'sh' };
+            const ext = extMap[lang] || 'txt';
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `VimeetAI_Code_${generateId().substring(0,5)}.${ext}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // --- Mode Logic ---
+        let currentMode = 'chat';
+
+        function updateInputState(mode, subMode) {
+            let session = chatSessions.find(s => s.id === currentSessionId);
+            let isFirstMessage = !session || session.messages.length === 0;
+            const uiInput = document.getElementById('user-input');
+            const instText = document.getElementById('active-mode-instruction');
+
+            if (!uiInput) return;
+
+            uiInput.disabled = false;
+            uiInput.readOnly = false;
+
+            let instruction = "Start typing your prompt...";
+            let detailedInst = "Type your request below to get started.";
+
+            if (mode === 'chat') {
+                let sm = (subMode || "").toLowerCase();
+                if(sm === 'analyze website') {
+                    instruction = "Enter website URL (e.g. https://google.com)";
+                    detailedInst = "Please enter a valid website URL below to deeply analyze its contents.";
+                } else if(sm === 'study chat') {
+                    instruction = "Ask a math or science question...";
+                    detailedInst = "Ask any study-related question. Equations will be perfectly aligned.";
+                } else if(sm === 'deep research') {
+                    instruction = "Enter a topic to research...";
+                    detailedInst = "Provide a topic below, and I will conduct deep, professional research.";
+                } else {
+                    instruction = "Say hello or ask anything...";
+                    detailedInst = "Have a general, human-like conversation with Vimeet AI.";
+                }
+            } else if (mode === 'code') {
+                let sm = (subMode || "").toLowerCase();
+                if (sm === 'update existing code') {
+                    if (isFirstMessage) {
+                        uiInput.disabled = true;
+                        uiInput.readOnly = true;
+                        uiInput.blur();
+                        uiInput.value = "";
+                        instruction = "Upload a code file to start...";
+                        detailedInst = "Step 1: Click the '+' icon below to upload a code file (.html, .py, .js, etc.). Text input is disabled until you upload.";
+                    } else {
+                        instruction = "Describe the updates needed...";
+                        detailedInst = "Code remembered! Now describe what changes you want to make.";
+                    }
+                } else if (sm === 'image to code') {
+                    if (isFirstMessage) {
+                        uiInput.disabled = true;
+                        uiInput.readOnly = true;
+                        uiInput.blur();
+                        uiInput.value = "";
+                        instruction = "Upload image(s) to start...";
+                        detailedInst = "Step 1: Click the '+' icon below to upload UI images. Text input is disabled until you upload.";
+                    } else {
+                        instruction = "Describe any further updates...";
+                        detailedInst = "Code generated! Describe if you need any further modifications.";
+                    }
+                } else {
+                    instruction = "Describe the app you want to build...";
+                    detailedInst = "Describe your app idea below, and I will generate complete, single-file code for it.";
+                }
+            } else if (mode === 'image') {
+                instruction = "Describe the image to generate...";
+                detailedInst = "Describe the visual you want, and I will create it for you.";
+            } else if (mode === 'video') {
+                instruction = "Video generation is on hold...";
+                detailedInst = "Video generation is currently on hold. Please try other modes.";
+            }
+
+            uiInput.placeholder = instruction;
+            if(instText) instText.innerText = detailedInst;
+
+            if(!uiInput.disabled) {
+                uiInput.focus();
+            }
+        }
+
+        function setMode(mode, subMode = null) {
+            currentMode = mode;
+            let session = chatSessions.find(s => s.id === currentSessionId);
+
+            if (!subMode) {
+                let dd;
+                if(mode === 'chat') dd = document.querySelector('.capability-card:nth-child(1) .cap-dropdown');
+                if(mode === 'code') dd = document.querySelector('.capability-card:nth-child(2) .cap-dropdown');
+                if(mode === 'image') dd = document.querySelector('.capability-card:nth-child(3) .cap-dropdown');
+                if(mode === 'video') dd = document.querySelector('.capability-card:nth-child(4) .cap-dropdown');
+                if (dd) subMode = dd.value;
+            }
+
+            if (session) {
+                if(mode === 'chat') session.chatSubMode = subMode;
+                if(mode === 'code') session.codeSubMode = subMode;
+            }
+
+            const capContainer = document.getElementById('cap-container');
+            const activeModeContainer = document.getElementById('active-mode-container');
+            const activeModeTitle = document.getElementById('active-mode-title');
+            const activeModeIcon = document.getElementById('active-mode-icon');
+
+            if (capContainer && activeModeContainer) {
+                capContainer.style.display = 'none';
+                activeModeContainer.style.display = 'block';
+
+                activeModeTitle.innerText = subMode ? subMode : (mode.charAt(0).toUpperCase() + mode.slice(1));
+
+                if(mode === 'chat') activeModeIcon.innerHTML = '<i class="fas fa-comment"></i>';
+                if(mode === 'code') activeModeIcon.innerHTML = '<i class="fas fa-code"></i>';
+                if(mode === 'image') activeModeIcon.innerHTML = '<i class="far fa-image"></i>';
+                if(mode === 'video') activeModeIcon.innerHTML = '<i class="fas fa-video"></i>';
+            }
+
+            updateInputState(mode, subMode);
+        }
+
+        function showAllModes() {
+            const capContainer = document.getElementById('cap-container');
+            const activeModeContainer = document.getElementById('active-mode-container');
+            if (capContainer && activeModeContainer) {
+                capContainer.style.display = 'flex';
+                activeModeContainer.style.display = 'none';
+            }
+
+            const uiInput = document.getElementById('user-input');
+            if(uiInput) {
+                uiInput.disabled = false;
+                uiInput.readOnly = false;
+                uiInput.placeholder = "Select a mode above or start typing...";
+                uiInput.blur();
+            }
+        }
+
+        // --- Theme Logic ---
+        function applyTheme() {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+
+            if (localStorage.getItem('color-theme') === 'pink') {
+                document.body.classList.add('pink-mode');
+                if(document.getElementById('pink-theme-dot')) document.getElementById('pink-theme-dot').style.display = 'none';
+                if(document.getElementById('blue-theme-dot')) document.getElementById('blue-theme-dot').style.display = 'block';
+            } else {
+                document.body.classList.remove('pink-mode');
+                if(document.getElementById('pink-theme-dot')) document.getElementById('pink-theme-dot').style.display = 'block';
+                if(document.getElementById('blue-theme-dot')) document.getElementById('blue-theme-dot').style.display = 'none';
+            }
+
+            const icon = document.getElementById('dark-mode-icon');
+            if (icon) {
+                const isDark = document.body.classList.contains('dark-mode');
+                icon.classList.replace(isDark ? 'fa-moon' : 'fa-sun', isDark ? 'fa-sun' : 'fa-moon');
+            }
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.body.classList.toggle('dark-mode');
+            const icon = document.getElementById('dark-mode-icon');
+            if (isDark) {
+                icon.classList.replace('fa-moon', 'fa-sun');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                icon.classList.replace('fa-sun', 'fa-moon');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        function setColorTheme(color) {
+            if (color === 'pink') {
+                document.body.classList.add('pink-mode');
+                localStorage.setItem('color-theme', 'pink');
+            } else {
+                document.body.classList.remove('pink-mode');
+                localStorage.setItem('color-theme', 'blue');
+            }
+            applyTheme();
+        }
+
+        applyTheme();
+        window.addEventListener('pageshow', applyTheme);
+
+        // --- History & State Logic ---
+        let chatSessions = JSON.parse(localStorage.getItem('vimeet_sessions')) || [];
+        let currentSessionId = localStorage.getItem('vimeet_current_session') || null;
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function saveSessions() {
+            localStorage.setItem('vimeet_sessions', JSON.stringify(chatSessions));
+            localStorage.setItem('vimeet_current_session', currentSessionId);
+            renderHistoryList();
+        }
+
+        function toggleHistory() {
+            document.getElementById('history-panel').classList.toggle('open');
+        }
+
+        function deleteChat(id) {
+            chatSessions = chatSessions.filter(s => s.id !== id);
+            if (currentSessionId === id) {
+                startNewChat();
+            } else {
+                saveSessions();
+            }
+        }
+
+        function renderHistoryList() {
+            const list = document.getElementById('history-list');
+            list.innerHTML = '';
+            chatSessions.forEach(session => {
+                const div = document.createElement('div');
+                div.className = `history-item ${session.id === currentSessionId ? 'active' : ''}`;
+                div.style.display = "flex";
+                div.style.justifyContent = "space-between";
+                div.style.alignItems = "center";
+
+                const textSpan = document.createElement('span');
+                textSpan.innerText = session.title;
+                textSpan.style.flex = "1";
+                textSpan.style.overflow = "hidden";
+                textSpan.style.textOverflow = "ellipsis";
+
+                const delIcon = document.createElement('i');
+                delIcon.className = 'fas fa-trash';
+                delIcon.style.color = '#ff4757';
+                delIcon.style.marginLeft = '10px';
+                delIcon.style.padding = '5px';
+                delIcon.style.opacity = '0.7';
+                delIcon.onmouseover = () => delIcon.style.opacity = '1';
+                delIcon.onmouseout = () => delIcon.style.opacity = '0.7';
+                delIcon.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteChat(session.id);
+                };
+
+                div.appendChild(textSpan);
+                div.appendChild(delIcon);
+
+                div.onclick = () => loadChat(session.id, true);
+                list.appendChild(div);
+            });
+        }
+
+        function startNewChat() {
+            currentSessionId = generateId();
+            chatSessions.unshift({ id: currentSessionId, title: "New Chat", messages: [] });
+            saveSessions();
+            loadChat(currentSessionId, false);
+            setMode('chat', 'General chat');
+            showAllModes();
+        }
+
+        function loadChat(id, closePanel = false) {
+            currentSessionId = id;
+            saveSessions();
+
+            chatContainer.innerHTML = '';
+            const session = chatSessions.find(s => s.id === id);
+
+            if (!session || session.messages.length === 0) {
+                mainWrapper.classList.remove('expanded');
+                chatContainer.innerHTML = `
+                <div id="welcome-msg" class="message-wrapper ai" style="flex-direction: column;">
+                    <div class="capabilities-container" id="cap-container">
+                        <div class="capability-card" onclick="setMode('chat')">
+                            <div class="cap-icon"><i class="fas fa-comment"></i></div>
+                            <div class="cap-text">
+                                <h3>Chat</h3>
+                                <select class="cap-dropdown" onclick="event.stopPropagation();" onchange="setMode('chat', this.value)">
+                                    <option>General chat</option>
+                                    <option>study chat</option>
+                                    <option>deep research</option>
+                                    <option>analyze website</option>
+                                    <option>ai gf/bf</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="capability-card" onclick="setMode('code')">
+                            <div class="cap-icon"><i class="fas fa-code"></i></div>
+                            <div class="cap-text">
+                                <h3>Code</h3>
+                                <select class="cap-dropdown" onclick="event.stopPropagation();" onchange="setMode('code', this.value)">
+                                    <option>Prompt to Code</option>
+                                    <option>Update Existing Code</option>
+                                    <option>Image to Code</option>
+                                    <option>Video to Code</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="capability-card" onclick="setMode('image')">
+                            <div class="cap-icon"><i class="far fa-image"></i></div>
+                            <div class="cap-text">
+                                <h3>Image</h3>
+                                <select class="cap-dropdown" onclick="event.stopPropagation();" onchange="setMode('image', this.value)">
+                                    <option>Prompt to image</option>
+                                    <option>Update Existing Image</option>
+                                    <option>Video to image</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="capability-card" onclick="setMode('video')">
+                            <div class="cap-icon"><i class="fas fa-video"></i></div>
+                            <div class="cap-text">
+                                <h3>Video</h3>
+                                <select class="cap-dropdown" onclick="event.stopPropagation();" onchange="setMode('video', this.value)">
+                                    <option>Prompt to video</option>
+                                    <option>Image to video</option>
+                                    <option>Update Existing Video</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="active-mode-container" id="active-mode-container" style="display:none; width:100%; background:var(--white); padding:20px; border-radius:16px; border:1px solid rgba(0,0,0,0.05); text-align:center; box-shadow: 0 4px 15px rgba(0,0,0,0.02); position: relative;">
+                        <button onclick="showAllModes()" style="position: absolute; top: 15px; left: 15px; background: transparent; border: none; font-size: 18px; color: var(--primary-blue); cursor: pointer; transition: 0.2s;" title="Back"><i class="fas fa-arrow-left"></i></button>
+
+                        <div style="font-size: 24px; color: var(--primary-blue); margin-bottom: 10px;" id="active-mode-icon"><i class="fas fa-cog"></i></div>
+                        <h3 id="active-mode-title" style="margin-bottom:8px; font-size: 16px; color:var(--text-main); font-weight: 600;">Mode</h3>
+                        <p id="active-mode-instruction" style="font-size:13.5px; color:var(--text-main); opacity: 0.7; margin-bottom:10px; line-height: 1.5;"></p>
+                    </div>
+                </div>`;
+            } else {
+                mainWrapper.classList.add('expanded');
+                session.messages.forEach(msg => {
+                    addMessage(msg.displayText, msg.sender, true);
+                });
+                updateScroll();
+            }
+
+            updateInputState(currentMode, session ? (currentMode === 'chat' ? session.chatSubMode : session.codeSubMode) : null);
+
+            if (closePanel && document.getElementById('history-panel').classList.contains('open')) {
+                toggleHistory();
+            }
+        }
+
+        function saveMessageToHistory(displayText, sender, apiText) {
+            let session = chatSessions.find(s => s.id === currentSessionId);
+            if (!session) return;
+
+            if (session.messages.length === 0 && sender === 'user') {
+                let titleText = displayText.replace(/📎 .*?\n/, '');
+                session.title = titleText.substring(0, 25) + (titleText.length > 25 ? '...' : '');
+            }
+
+            session.messages.push({ displayText, sender, apiText: apiText || displayText });
+            saveSessions();
+        }
+
+        function initApp() {
+            renderHistoryList();
+            startNewChat();
+        }
+
+        fileInput.onchange = async () => {
+            if (fileInput.files.length > 0) {
+                let names = Array.from(fileInput.files).map(f => f.name).join(', ');
+                selectedFileName = names;
+                filePreview.innerText = `Selected: ${names}`;
+                filePreview.style.display = "block";
+
+                selectedFileContent = "";
+                selectedImageFiles = [];
+
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    const file = fileInput.files[i];
+                    if (file.type.includes("text") || file.name.match(/\.(txt|html|htm|css|js|py|php|json|xml)$/i)) {
+                        const text = await file.text();
+                        selectedFileContent += `\n--- ${file.name} ---\n${text}\n`;
+                    } else if (file.type.startsWith("image/")) {
+                        selectedImageFiles.push(file);
+                    } else {
+                        selectedFileContent += `\n--- ${file.name} ---\n[Visual/Binary File Attached]\n`;
+                    }
+                }
+            }
+        };
+
+        function updateScroll() {
+            if (!isUserScrolling) {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        }
+
+        function addMessage(text, sender, isHistory = false) {
+            if (!text.trim()) return;
+
+            const wrapper = document.createElement("div");
+            wrapper.className = `message-wrapper ${sender}`;
+
+            const div = document.createElement("div");
+            div.className = `message ${sender}-message`;
+
+            if (sender === "ai") {
+                if (isHistory) {
+                    const thinkMatch = text.match(/<think>([\s\S]*?)(?:<\/think>|$)/i);
+                    if (thinkMatch) {
+                        const tText = thinkMatch[1].trim();
+                        const fText = text.replace(/<think>[\s\S]*?(?:<\/think>|$)/i, '').trim();
+                        const tHtml = `
+                            <div class="thought-box collapsed">
+                                <div class="thought-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                                    <div class="thought-title">
+                                        <i class="fas fa-sparkles sparkle-icon"></i>
+                                        <span>Thoughts</span>
+                                    </div>
+                                    <i class="fas fa-chevron-down chevron-icon"></i>
+                                </div>
+                                <div class="thought-content">${marked.parse(tText)}</div>
+                            </div>
+                        `;
+                        div.innerHTML = tHtml + marked.parse(fText);
+                    } else {
+                        div.innerHTML = marked.parse(text);
+                    }
+                } else {
+                    div.innerHTML = marked.parse(text);
+                }
+            } else {
+                div.innerText = text;
+            }
+
+            wrapper.appendChild(div);
+            chatContainer.appendChild(wrapper);
+
+            if (!isHistory) updateScroll();
+
+            if (currentMode !== 'code' && window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+                MathJax.typesetPromise();
+            }
+        }
+
+        function typeAIResponse(fullText) {
+            const wrapper = document.createElement("div");
+            wrapper.className = "message-wrapper ai";
+            const div = document.createElement("div");
+            div.className = "message ai-message";
+            wrapper.appendChild(div);
+            chatContainer.appendChild(wrapper);
+
+            let tText = "";
+            let fText = fullText;
+            let hasThink = false;
+
+            const thinkMatch = fullText.match(/<think>([\s\S]*?)(?:<\/think>|$)/i);
+            if (thinkMatch) {
+                hasThink = true;
+                tText = thinkMatch[1].trim();
+                fText = fullText.replace(/<think>[\s\S]*?(?:<\/think>|$)/i, '').trim();
+            }
+
+            let thoughtContainer = null;
+            let thoughtContentDiv = null;
+
+            if (hasThink) {
+                thoughtContainer = document.createElement("div");
+                thoughtContainer.className = "thought-box";
+                thoughtContainer.innerHTML = `
+                    <div class="thought-header" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <div class="thought-title">
+                            <i class="fas fa-sparkles sparkle-icon"></i>
+                            <span>Thoughts</span>
+                        </div>
+                        <i class="fas fa-chevron-down chevron-icon"></i>
+                    </div>
+                `;
+                thoughtContentDiv = document.createElement("div");
+                thoughtContentDiv.className = "thought-content";
+                thoughtContainer.appendChild(thoughtContentDiv);
+                div.appendChild(thoughtContainer);
+            }
+
+            const msgContainer = document.createElement("div");
+            div.appendChild(msgContainer);
+
+            let i = 0;
+            let j = 0;
+
+            function typeFinal() {
+                if (thoughtContainer) thoughtContainer.classList.add("collapsed");
+
+                let finalTimer = setInterval(() => {
+                    let chunkSize = 25;
+                    if (j >= fText.length) {
+                        clearInterval(finalTimer);
+                        msgContainer.innerHTML = marked.parse(fText);
+
+                        if (currentMode !== 'code' && window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+                            MathJax.typesetPromise();
+                        }
+
+                        updateScroll();
+                        return;
+                    }
+                    j += chunkSize;
+                    let currentText = fText.substring(0, j);
+
+                    let backtickCount = (currentText.match(/```/g) || []).length;
+                    if (backtickCount % 2 !== 0) {
+                        currentText += "\n```";
+                    }
+
+                    msgContainer.innerHTML = marked.parse(currentText + " ▊");
+                    updateScroll();
+                }, 5);
+            }
+
+            if (hasThink) {
+                let thoughtTimer = setInterval(() => {
+                    let chunkSize = 40;
+                    if (i >= tText.length) {
+                        clearInterval(thoughtTimer);
+                        thoughtContentDiv.innerHTML = marked.parse(tText);
+                        typeFinal();
+                        return;
+                    }
+                    i += chunkSize;
+                    thoughtContentDiv.innerHTML = marked.parse(tText.substring(0, i) + " ▊");
+                    updateScroll();
+                }, 5);
+            } else {
+                typeFinal();
+            }
+        }
+
+        async function askAI() {
+            loader.style.display = "block";
+            updateScroll();
+
+            let loaderSteps = ["Analyzing prompt...", "Understanding context...", "Deep thinking...", "Writing code structure...", "Generating final response..."];
+            let loaderStepIdx = 0;
+            let loaderContentEl = document.getElementById("loader-content-text");
+            if(loaderContentEl) loaderContentEl.innerHTML = `<div><i class="fas fa-circle-notch fa-spin" style="color:var(--primary-blue); margin-right:5px;"></i> ${loaderSteps[0]}</div>`;
+
+            let loaderInterval = setInterval(() => {
+                loaderStepIdx = (loaderStepIdx + 1) % loaderSteps.length;
+                if(loaderContentEl) loaderContentEl.innerHTML = `<div><i class="fas fa-circle-notch fa-spin" style="color:var(--primary-blue); margin-right:5px;"></i> ${loaderSteps[loaderStepIdx]}</div>`;
+            }, 1800);
+
+            let session = chatSessions.find(s => s.id === currentSessionId);
+            let lastMessageText = "";
+
+            let sysContent = "You are JARVIS, an intelligent and helpful assistant.";
+
+            if (currentMode === 'code') {
+                sysContent = "You are Vimeet AI, an expert web developer. When writing or updating code, you MUST ALWAYS output the COMPLETE, fully functional code in a single unified HTML file (containing HTML, CSS, and JS) inside a single code block. NEVER provide partial snippets, diffs, or explanations instead of the code. Always rely on the conversation history to understand the existing code, apply the user's requested updates, and return the ENTIRE updated codebase.";
+            } else if (currentMode === 'chat' && session && session.chatSubMode) {
+                let subMode = session.chatSubMode.toLowerCase();
+                if (subMode === 'general chat') {
+                    sysContent = "Human like answer questions neetly not go deep or chat general.";
+                } else if (subMode === 'study chat') {
+                    sysContent = "Answers questions neetly don't make any mistake give accurate answers and align answers text and equations neetly and align equations of maths physics etc with help of mathjax.";
+                } else if (subMode === 'deep research') {
+                    sysContent = "Resource deeply on giving topic or conversation and give deep and professional answers.";
+                } else if (subMode === 'analyze website') {
+                    sysContent = "Deep resource on website which link given by me and give full details of this website and align perfectly.";
+                }
+            }
+
+            let reqMessages = [
+                { role: "system", content: sysContent }
+            ];
+
+            if (session && session.messages) {
+                session.messages.forEach((msg) => {
+                    reqMessages.push({
+                        role: msg.sender === 'user' ? 'user' : 'assistant',
+                        content: msg.apiText
+                    });
+                    if (msg.sender === 'user') {
+                        if (Array.isArray(msg.apiText)) {
+                            let textObj = msg.apiText.find(item => item.type === "text");
+                            lastMessageText = textObj ? textObj.text : "";
+                        } else {
+                            lastMessageText = msg.apiText;
+                        }
+                    }
+                });
+            }
+
+            try {
+                let aiReply = "";
+
+                if (currentMode === 'video') {
+                    aiReply = "Video generation is currently on hold. Kuch nahi kiya gaya hai.";
+
+                } else if (currentMode === 'image') {
+                    const cleanPrompt = lastMessageText || "beautiful landscape";
+                    const apiUrl = `${NEW_BASE_URL}/images/generations`;
+
+                    const response = await fetch(apiUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${NEW_API_KEY}`
+                        },
+                        body: JSON.stringify({
+                            model: "image-gen",
+                            prompt: cleanPrompt,
+                            n: 1,
+                            size: "1024x1024"
+                        })
+                    });
+
+                    const responseText = await response.text();
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch(e) {
+                        throw new Error("Server returned invalid response: " + responseText.substring(0, 100));
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(data.error?.message || data.error || `Image API Error: ${response.status}`);
+                    }
+
+                    if (data && data.data && data.data.length > 0 && data.data[0].url) {
+                        aiReply = `![Generated Image](${data.data[0].url})`;
+                    } else if (data.url) {
+                        aiReply = `![Generated Image](${data.url})`;
+                    } else {
+                        throw new Error("Unexpected Image Data Structure: " + JSON.stringify(data).substring(0, 150));
+                    }
+
+                } else {
+                    const apiUrl = `${NEW_BASE_URL}/chat/completions`;
+
+                    let selectedModel = currentMode === 'code' ? 'deepseek-r1' : 'claude-4.5-haiku';
+
+                    const response = await fetch(apiUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${NEW_API_KEY}`
+                        },
+                        body: JSON.stringify({
+                            model: selectedModel,
+                            messages: reqMessages
+                        })
+                    });
+
+                    const responseText = await response.text();
+                    let data;
+                    try {
+                        data = JSON.parse(responseText);
+                    } catch(e) {
+                        throw new Error("Server returned invalid response: " + responseText.substring(0, 100));
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(data.error?.message || data.error || `API Error: ${response.status}`);
+                    }
+
+                    if (data && data.choices && data.choices.length > 0 && data.choices[0].message) {
+                        aiReply = data.choices[0].message.content || "";
+
+                        let reasoning = data.choices[0].message.reasoning_content || "";
+                        if (reasoning) {
+                            aiReply = "<think>\n" + reasoning + "\n</think>\n" + aiReply;
+                        }
+                    } else if (data.response) {
+                        aiReply = data.response;
+                    } else if (data.message && typeof data.message === 'string') {
+                        aiReply = data.message;
+                    } else {
+                        throw new Error("Unexpected API Response Structure: " + JSON.stringify(data).substring(0, 150));
+                    }
+                }
+
+                clearInterval(loaderInterval);
+                loader.style.display = "none";
+
+                if (aiReply && aiReply.trim() !== "") {
+                    aiReply = aiReply.replace(/^Vimeet AI:\s*/i, '').trim();
+                    saveMessageToHistory(aiReply, "ai", aiReply);
+
+                    if (currentMode === 'image' || currentMode === 'video') {
+                        addMessage(aiReply, "ai", false);
+                    } else {
+                        typeAIResponse(aiReply);
+                    }
+                } else {
+                    throw new Error("API completely processed request but returned empty text.");
+                }
+
+            } catch (error) {
+                clearInterval(loaderInterval);
+                loader.style.display = "none";
+                console.error("🔥 API ERROR:", error);
+
+                let fallbackReply = `⚠️ API Error: ${error.message}`;
+                addMessage(fallbackReply, "ai");
+                saveMessageToHistory(fallbackReply, "ai", fallbackReply);
+            }
+        }
+
+        async function processInput() {
+            const q = userInput.value.trim();
+            if (!q && !selectedFileName) return;
+
+            let session = chatSessions.find(s => s.id === currentSessionId);
+            let isFirstMessage = !session || session.messages.length === 0;
+
+            if (isFirstMessage) {
+                if (currentMode === 'chat') {
+                    if (session.chatSubMode && session.chatSubMode.toLowerCase() === 'analyze website') {
+                        const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
+                        if (!urlPattern.test(q)) {
+                            return;
+                        }
+                    }
+                } else if (currentMode === 'code') {
+                    if (session.codeSubMode === 'Update Existing Code') {
+                        if (!selectedFileName) {
+                            return;
+                        }
+                        const validExts = /\.(html|htm|css|js|py|php|json|xml|jsx|ts|tsx)$/i;
+                        if (!validExts.test(selectedFileName)) {
+                            return;
+                        }
+                    } else if (session.codeSubMode === 'Image to Code') {
+                        if (!selectedFileName) {
+                            return;
+                        }
+                    }
+                }
+            }
+
+            userInput.disabled = true;
+            sendBtn.disabled = true;
+
+            if (selectedImageFiles && selectedImageFiles.length > 0) {
+                loader.style.display = "block";
+                let loaderContentEl = document.getElementById("loader-content-text");
+                if(loaderContentEl) loaderContentEl.innerHTML = `<div><i class="fas fa-eye fa-fade" style="color:var(--primary-blue); margin-right:5px;"></i> Processing Images through Vision API...</div>`;
+
+                let visionContexts = [];
+                for (let file of selectedImageFiles) {
+                    const formData = new FormData();
+                    formData.append('image', file);
+                    if (q) formData.append('message', q);
+
+                    try {
+                        const res = await fetch("https://dev-x-vision.vercel.app/api/vision", {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const json = await res.json();
+                        let context = json.image_context_for_ai || json.reply || JSON.stringify(json);
+                        visionContexts.push(`[Vision Context for ${file.name}]: ${context}`);
+                    } catch (e) {
+                        console.error("Vision API Error:", e);
+                        visionContexts.push(`[Vision Context for ${file.name}]: Failed to analyze image.`);
+                    }
+                }
+
+                if (visionContexts.length > 0) {
+                    selectedFileContent += `\n\n--- Extracted Image Details ---\n${visionContexts.join("\n\n")}\n`;
+                }
+
+                loader.style.display = "none";
+            }
+
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+
+            mainWrapper.classList.add('expanded');
+
+            const welcomeMsg = document.getElementById("welcome-msg");
+            if (welcomeMsg) welcomeMsg.remove();
+
+            let displayMsg = q;
+            let apiContextMsg = q;
+
+            if (currentMode === 'code') {
+                let codeModeType = session.codeSubMode || 'Prompt to Code';
+
+                let lastCode = "";
+                if (!isFirstMessage && session && session.messages) {
+                    for (let i = session.messages.length - 1; i >= 0; i--) {
+                        if (session.messages[i].sender === 'ai') {
+                            let text = String(session.messages[i].apiText || "");
+                            let match = text.match ? text.match(/```[\s\S]*?```/) : null;
+                            if (match) {
+                                lastCode = match[0];
+                                break;
+                            }
+                        }
+                    }
+                    if (!lastCode && session.messages.length > 0) {
+                        lastCode = Array.isArray(session.messages[0].apiText)
+                            ? (session.messages[0].apiText.find(i => i.type === "text")?.text || "")
+                            : session.messages[0].apiText;
+                        lastCode = lastCode.replace(/Is code ko yaad rakho aur me jo bhi bolu bas wahi add ya remove karte jaana baaki kuch bhi change mat karna\. Sirf 'Code yaad kar liya' itna hi reply do abhi code waapis mat do\./gi, "").trim();
+                    }
+                }
+
+                if (codeModeType === 'Prompt to Code') {
+                    if (isFirstMessage) {
+                        apiContextMsg = "Muzhe html css and js me single html file me ek app ki coding do : " + q;
+                    } else {
+                        apiContextMsg = `[Context Memory]:\n${lastCode}\n\n` + q + " aur muzhe full updated code do bas itna karo baaki kuch bhi change mat karo";
+                    }
+                } else if (codeModeType === 'Update Existing Code') {
+                    if (isFirstMessage) {
+                        apiContextMsg = "Is code ko yaad rakho aur me jo bhi bolu bas wahi add ya remove karte jaana baaki kuch bhi change mat karna. Sirf 'Code yaad kar liya' itna hi reply do abhi code waapis mat do.";
+                    } else {
+                        apiContextMsg = `[Context Memory]:\n${lastCode}\n\n` + q + " aur muzhe full updated code do bas itna karo baaki kuch bhi change mat karo";
+                    }
+                } else if (codeModeType === 'Image to Code') {
+                    if (isFirstMessage) {
+                        apiContextMsg = "Mene tumhe kuch images di he muzhe unki full copy html css and js me single html file me do full copy thoda bhi change nahi hona chahiye bas itna karo aur full updated code do";
+                    } else {
+                        apiContextMsg = `[Context Memory]:\n${lastCode}\n\n` + q + " aur muzhe full updated code do bas itna karo baaki kuch bhi change mat karo";
+                    }
+                } else {
+                    if (isFirstMessage) {
+                        apiContextMsg = "Muzhe html css and js me single html file me ek app ki coding do : " + q;
+                    } else {
+                        apiContextMsg = `[Context Memory]:\n${lastCode}\n\n` + q + " aur muzhe full updated code do bas itna karo baaki kuch bhi change mat karo";
+                    }
+                }
+            }
+
+            if (typeof selectedFileName !== 'undefined' && selectedFileName) {
+                displayMsg = q ? `📎 ${selectedFileName}\n${q}` : `📎 ${selectedFileName}`;
+                apiContextMsg = `Context: File "${selectedFileName}" content: "${selectedFileContent}". \n\nUser Question: ${apiContextMsg}`;
+            }
+
+            addMessage(displayMsg, "user");
+            saveMessageToHistory(displayMsg, "user", apiContextMsg);
+
+            userInput.value = "";
+            userInput.disabled = false;
+            userInput.readOnly = false;
+            userInput.placeholder = "Start typing a prompt for " + currentMode + "...";
+            fileInput.value = "";
+            filePreview.style.display = "none";
+
+            askAI();
+
+            selectedFileName = "";
+            selectedFileContent = "";
+            selectedImageFiles = [];
+        }
+
+        sendBtn.onclick = processInput;
+        userInput.onkeypress = e => { if (e.key === "Enter") processInput(); };
+
+        initApp();
+    </script>
+
+</body>
+</html>

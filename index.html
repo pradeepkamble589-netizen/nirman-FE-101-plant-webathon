@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Smart Plant Information System</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<h1>🌿 Smart Plant Information System</h1>
+
+<button onclick="darkMode()">Toggle Dark Mode</button>
+
+<a href="jarvis.html">
+<button class="ai-btn">🤖 Open AI Plant Assistant</button>
+</a>
+
+<br><br>
+
+<input type="text" id="search" placeholder="Search plant..." onkeyup="searchPlant()">
+
+<div class="plants">
+
+<div class="card plant">
+<img src="https://upload.wikimedia.org/wikipedia/commons/9/90/Hapus_Mango.jpg">
+<h3>Mango</h3>
+<a href="plants/mango.html">View Info</a>
+</div>
+
+<div class="card plant">
+<img src="https://manbhawannursery.in/cdn/shop/files/neem-plant-1000x1000.webp?v=1763267009">
+<h3>Neem</h3>
+<a href="plants/neem.html">View Info</a>
+</div>
+
+<div class="card plant">
+<img src="https://thenurserywala.com/wp-content/uploads/2025/06/ChatGPT-Image-Aug-3-2025-07_35_22-PM.png">
+<h3>Tulsi</h3>
+<a href="plants/tulsi.html">View Info</a>
+</div>
+
+<div class="card plant">
+<img src="https://media.licdn.com/dms/image/v2/C5612AQGwerDd8KIrlg/article-cover_image-shrink_600_2000/article-cover_image-shrink_600_2000/0/1520135660591?e=2147483647&v=beta&t=_Xp7-DTWm75szAdC0XDC9Ii9RS9Y-m1GcCQVQ70Djzc">
+<h3>Banyan</h3>
+<a href="plants/banyan.html">View Info</a>
+</div>
+
+<div class="card plant">
+<img src="https://plantorbit.com/cdn/shop/files/Aloe_Vera.jpg?v=1770455918&width=1445">
+<h3>Aloe Vera</h3>
+<a href="plants/aloe.html">View Info</a>
+</div>
+
+<div class="card plant">
+<img src="https://d31wxntiwn0x96.cloudfront.net/rpcaja/productimages/454.png?width=547&etag=%22f45e81130bcbce2ce811c6a36ee79cae%22">
+<h3>Coconut</h3>
+<a href="plants/coconut.html">View Info</a>
+</div>
+
+<div class="card plant">
+<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT8mE0h_nWUOc4fAj1ZsbY3FuEyxXc9k-pmOQ&s">
+<h3>Banana</h3>
+<a href="plants/banana.html">View Info</a>
+</div>
+
+<div class="card plant">
+<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5ttYdW61PvtkDhfgX-dOkIdAHBzvwqXeQYg&s">
+<h3>Peepal</h3>
+<a href="plants/peepal.html">View Info</a>
+</div>
+
+<div class="card plant">
+<img src="https://thumbs.dreamstime.com/b/mjc-mp-jan-357429512.jpg">
+<h3>Guava</h3>
+<a href="plants/guava.html">View Info</a>
+</div>
+
+<div class="card plant">
+<img src="https://lalitenterprise.com/cdn/shop/files/Standing_Rose_Red.webp?v=1737546449&width=1445">
+<h3>Rose</h3>
+<a href="plants/rose.html">View Info</a>
+</div>
+
+</div>
+
+<br>
+
+<h2>🌳 Tree Plantation Counter</h2>
+<h1 id="counter">0</h1>
+
+<button onclick="addTree()">Plant Tree</button>
+
+<script src="script.js"></script>
+
+</body>
+</html>
